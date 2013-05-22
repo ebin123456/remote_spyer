@@ -135,7 +135,7 @@ hm = pyHook.HookManager()
 hm.KeyDown = OnKeyboardEvent
 hm.HookKeyboard()
 
-
+#koding test
 if __name__ == '__main__':
   import pythoncom
   pythoncom.PumpMessages()
